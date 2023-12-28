@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobileCookbook", "MobileCookbook.csproj", "{18368C73-C214-4754-8E19-1D5BE10A7FB3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{18368C73-C214-4754-8E19-1D5BE10A7FB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18368C73-C214-4754-8E19-1D5BE10A7FB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18368C73-C214-4754-8E19-1D5BE10A7FB3}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{18368C73-C214-4754-8E19-1D5BE10A7FB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18368C73-C214-4754-8E19-1D5BE10A7FB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18368C73-C214-4754-8E19-1D5BE10A7FB3}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A31275EA-594C-4BD7-86B0-D77EAAF56A33}
+	EndGlobalSection
+EndGlobal

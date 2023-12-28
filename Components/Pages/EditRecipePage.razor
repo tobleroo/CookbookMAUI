@@ -1,0 +1,204 @@
+﻿@page "/newrecipe"
+@page "/newrecipe/{RecipeId:int}"
+@using CommunityToolkit.Maui.Core
+@using MauiCookbook.Models
+@using MauiCookbook.Services
+@using MobileCookbook.Services
+@using CommunityToolkit.Maui.Alerts;
+
+
+@inject IRecipeService RecipeService
+@inject IShoppingListService shoppinglistService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
+
+<h3 class="text-center my-4">Add New Recipe</h3>
+
+<div class="container">
+    <form @onsubmit="HandleSubmit">
+        @if (RecipeId.HasValue)
+        {
+            <div class="mb-3 text-end">
+                <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">
+                    Delete Recipe
+                </button>
+            </div>
+        }
+        <div class="mb-3">
+            <label for="recipeName" class="form-label">Recipe Name</label>
+            <input type="text" class="form-control" id="recipeName" @bind="recipe.RecipeName">
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" @bind="recipe.Description"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="cookTime" class="form-label">Cook Time (minutes)</label>
+            <input type="number" class="form-control" id="cookTime" @bind="recipe.CookTime">
+        </div>
+
+        <div class="mb-3">
+            <label for="type" class="form-label">Type</label>
+            <select class="form-control" id="type" @bind="recipe.RecipeType">
+                @foreach (var type in Enum.GetValues<RecipeTypes>())
+                {
+                    <option value="@type">@type</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="spiciness" class="form-label">Spiciness</label>
+            <input type="number" class="form-control" id="spiciness" @bind="recipe.Spicyness" min="1" max="5" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Steps:</label>
+            @foreach (var step in recipe.Steps)
+            {
+                <p class="ps-3">@step</p>
+            }
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" @bind="newStepName" placeholder="Add a step">
+                <button class="btn btn-outline-secondary" type="button" @onclick="AddStep">Add</button>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Ingredients:</label>
+            @if (ingredients.Count == 0)
+            {
+                <p>No ingredients added yet.</p>
+            }
+            else
+            {
+                @foreach (var ingr in ingredients)
+                {
+                    <p class="ps-3">@ingr.Name (@ingr.Quantity @ingr.Unit)</p>
+                }
+            }
+            <div class="row g-3">
+                <div class="col">
+                    <input type="text" class="form-control" @bind="newIngr.Name" placeholder="Ingredient name">
+                </div>
+                <div class="col">
+                    <input type="number" class="form-control" @bind="newIngr.Quantity" placeholder="Amount">
+                </div>
+                <div class="col">
+                    <input type="text" class="form-control" @bind="newIngr.Unit" placeholder="Unit">
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-outline-secondary" type="button" @onclick="AddNewIngredient">Add</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Add Recipe</button>
+        </div>
+
+        @if (RecipeId.HasValue)
+        {  
+            <div class="add-toshopping-box">
+                <input type="number" placeholder="portions" @bind="portionsForShoping" min=1/>
+                <button @onclick="AddRecipeToShoppingList">Add</button>
+            </div>
+        }
+    </form>
+</div>
+
+@code {
+    private Recipe recipe = new Recipe();
+    private string newStepName = "";
+    private Ingredient newIngr = new();
+    private List<Ingredient> ingredients = new();
+    private int portionsForShoping = 1;
+
+    [Parameter]
+    public int? RecipeId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (RecipeId.HasValue)
+        {
+            recipe = await RecipeService.GetRecipeByIdAsync(RecipeId.Value);
+            ingredients = recipe.Ingredients;
+        }
+        else
+        {
+            recipe = new Recipe() { RecipeName = "not set" };
+        }
+    }
+
+    private void AddNewIngredient()
+    {
+        ingredients.Add(newIngr);
+        newIngr = new();
+    }
+
+    private async Task HandleSubmit()
+    {
+        //add to save ignredients to its own table and add reference to the id of the right recipe
+        try
+        {
+            if (RecipeId.HasValue)
+            {
+                await RecipeService.UpdateRecipeAsync(recipe);
+            }
+            else
+            {
+                await RecipeService.AddRecipeAsync(recipe, ingredients);
+            }
+            Console.WriteLine("-----success----");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"error ----> {ex.Message}");
+        }
+    }
+
+    private void AddStep()
+    {
+        recipe.Steps.Add(newStepName);
+        newStepName = "";
+    }
+
+    private async Task ConfirmDelete()
+    {
+        var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this recipe?");
+        if (confirmed)
+        {
+            await DeleteRecipe();
+        }
+    }
+
+    private async Task DeleteRecipe()
+    {
+        if (RecipeId.HasValue)
+        {
+            await RecipeService.DeleteRecipeAsync(RecipeId.Value);
+            NavigationManager.NavigateTo("/recipes"); 
+        }
+    }
+
+    private async void AddRecipeToShoppingList()
+    {
+        if (RecipeId.HasValue)
+        {
+            var success = await shoppinglistService.AddRecipetoShoppingList(RecipeId.Value, portionsForShoping);
+
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            string text = "Successful add!";
+            ToastDuration duration = ToastDuration.Short;
+            double fontSize = 14;
+
+            var toast = Toast.Make(text, duration, fontSize);
+
+            await toast.Show(cancellationTokenSource.Token);
+        }
+    }
+
+
+}

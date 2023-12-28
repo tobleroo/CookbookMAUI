@@ -1,0 +1,89 @@
+﻿@page "/shoppinglist"
+@using MobileCookbook.Models
+@using MobileCookbook.Services
+
+@inject IShoppingListService ShoppingListService
+
+
+<h3>ShoppinglistPage</h3>
+<p>@shoppingList.Id size : @shoppingList.IngredientsToBuy.Count</p>
+
+<div>
+    <h4>Ingredients to Buy:</h4>
+    @if (shoppingList.IngredientsToBuy.Any())
+    {
+        <ul>
+            @foreach (var item in shoppingList.IngredientsToBuy)
+            {
+                <li>@item</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No ingredients to buy.</p>
+    }
+
+    <h4>Extra Items to Buy:</h4>
+    @if (shoppingList.ExtraItemstoBuy.Any())
+    {
+        <ul>
+            @foreach (var item in shoppingList.ExtraItemstoBuy)
+            {
+                <li>@item</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No extra items to buy.</p>
+    }
+
+    <h4>Add Extra Item:</h4>
+    <div class="input-group mb-3">
+        <input type="text" class="form-control" placeholder="Enter new item" @bind="newExtraItem">
+        <button class="btn btn-primary" @onclick="AddExtraItem">Add</button>
+    </div>
+</div>
+
+@code {
+    private ShoppingList shoppingList = new();
+
+    private string newExtraItem;
+    private string errorMessage;
+
+    private async Task AddExtraItem()
+    {
+        if (!string.IsNullOrWhiteSpace(newExtraItem))
+        {
+            shoppingList.ExtraItemstoBuy.Add(newExtraItem);
+            newExtraItem = string.Empty;
+
+            // Update the shopping list in the database
+            try
+            {
+                var success = await ShoppingListService.UpdateShoppingListAsync(shoppingList);
+                if (!success)
+                {
+                    errorMessage = "Failed to update the shopping list.";
+                }
+                else shoppingList = await ShoppingListService.GetShoppingList();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error: {ex.Message}";
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            shoppingList = await ShoppingListService.GetShoppingList();
+        }catch(Exception ex)
+        {
+            Console.WriteLine($"error ---> {ex.Message}");
+        }
+    }
+}
