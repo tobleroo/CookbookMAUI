@@ -134,6 +134,7 @@
 
     private void AddNewIngredient()
     {
+        newIngr.RecipeId = recipe.ID;
         ingredients.Add(newIngr);
         newIngr = new();
     }

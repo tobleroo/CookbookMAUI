@@ -26,12 +26,42 @@ namespace MobileCookbook
             var result = await Database.CreateTableAsync<Recipe>();
             await Database.CreateTableAsync<Ingredient>();
             await Database.CreateTableAsync<ShoppingList>();
+            await Database.CreateTableAsync<IngredientHistoryData>();
         }
 
         public async Task<List<Recipe>> GetRecipesAsync()
         {
             await Init();
             return await Database.Table<Recipe>().ToListAsync();
+        }
+
+        public async Task<List<IngredientHistoryData>> GetIngrHistoryAsync()
+        {
+            await Init();
+            return await Database.Table<IngredientHistoryData>().ToListAsync();
+        }
+
+        public async Task UpsertIngredientHistoryDataAsync(IngredientHistoryData data)
+        {
+            await Init();
+
+            // Check if the data already exists in the database
+            var existingData = await Database.Table<IngredientHistoryData>()
+                                    .Where(i => i.ID == data.ID)
+                                    .FirstOrDefaultAsync();
+
+            if (existingData != null)
+            {
+                // If it exists, update the existing record
+                // Note: You might need to handle the TimesBought list separately 
+                // if it's not properly updated by UpdateAsync
+                await Database.UpdateAsync(data);
+            }
+            else
+            {
+                // If it doesn't exist, insert a new record
+                await Database.InsertAsync(data);
+            }
         }
 
         public async Task<Recipe> GetRecipeById(int id)

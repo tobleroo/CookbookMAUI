@@ -4,18 +4,30 @@
 
 @inject IShoppingListService ShoppingListService
 
-
-<h3>ShoppinglistPage</h3>
-<p>@shoppingList.Id size : @shoppingList.IngredientsToBuy.Count</p>
+<div class="d-flex align-items-center mb-3">
+    <h3 class="mb-0 flex-grow-1">ShoppinglistPage</h3>
+    <button class="btn btn-outline-secondary" @onclick="RemoveCheckedItems">
+        <i class="bi bi-arrow-repeat"></i> Update
+    </button>
+</div>
 
 <div>
     <h4>Ingredients to Buy:</h4>
     @if (shoppingList.IngredientsToBuy.Any())
     {
-        <ul>
+        <ul class="list-unstyled">
             @foreach (var item in shoppingList.IngredientsToBuy)
             {
-                <li>@item</li>
+                <li>
+                    <div class="row">
+                        <div class="col-auto">
+                            <input type="checkbox" checked="@item.Value" @onclick="@(() => ToggleCheckedState(item.Key))" />
+                        </div>
+                        <div class="col">
+                            @item.Key
+                        </div>
+                    </div>
+                </li>
             }
         </ul>
     }
@@ -27,10 +39,19 @@
     <h4>Extra Items to Buy:</h4>
     @if (shoppingList.ExtraItemstoBuy.Any())
     {
-        <ul>
+        <ul class="list-unstyled">
             @foreach (var item in shoppingList.ExtraItemstoBuy)
             {
-                <li>@item</li>
+                <li>
+                    <div class="row">
+                        <div class="col-auto">
+                            <input type="checkbox" checked="@item.Value" @onclick="@(() => ToggleCheckedState(item.Key, true))" />
+                        </div>
+                        <div class="col">
+                            @item.Key
+                        </div>
+                    </div>
+                </li>
             }
         </ul>
     }
@@ -40,23 +61,177 @@
     }
 
     <h4>Add Extra Item:</h4>
-    <div class="input-group mb-3">
-        <input type="text" class="form-control" placeholder="Enter new item" @bind="newExtraItem">
+    <div class="input-group mb-3 position-relative">
+        <input type="text" class="form-control" placeholder="Enter new item"
+               @bind="newExtraItem" @oninput="@(e => FilterItems(e.Value.ToString()))">
         <button class="btn btn-primary" @onclick="AddExtraItem">Add</button>
+
+        @if (filteredItems.Any())
+        {
+            <ul class="list-group position-absolute" style="z-index: 1000; top: 100%; left: 0; width: 100%;">
+                @foreach (var item in filteredItems)
+                {
+                    <li class="list-group-item" @onclick="() => SelectItem(item)">
+                        @item
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    @* demo to see if it adds the dates *@
+    @* <div>
+        <h2>DEMO</h2>
+        @foreach (var item in history)
+        {
+            <p>Name: @item.Name</p>
+            <p>Times Bought:</p>
+            <ul>
+                @foreach (var time in item.TimesBought)
+                {
+                    <li>@time.ToShortDateString()</li>
+                }
+            </ul>
+        }
+    </div> *@
+
+    @* recoomendations *@
+    <div class="container mt-3">
+        <h3>Rebuy Recommendations</h3>
+        <ul class="list-group">
+            @foreach (var item in recommendations)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    @item
+                    <span class="badge bg-primary rounded-pill">Rebuy</span>
+                </li>
+            }
+        </ul>
     </div>
 </div>
 
 @code {
     private ShoppingList shoppingList = new();
 
+    //demo purpose only
+    private List<IngredientHistoryData> history = new();
+    private List<string> recommendations = new();
+
+    private List<string> allPossibleItems = new();
+    // private List<string> allPossibleItems = new List<string> { "Bread", "Banana", "Butter", "Milk", "Eggs", "Apples" };
+    private List<string> filteredItems = new List<string>();
     private string newExtraItem;
     private string errorMessage;
+
+    private void SelectItem(string item)
+    {
+        newExtraItem = item;
+        filteredItems.Clear();
+    }
+
+    private void FilterItems(string searchText)
+    {
+        filteredItems.Clear(); // Clear the existing items
+
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return; // If the search text is null or whitespace, do nothing
+        }
+
+        searchText = searchText.ToLower(); // Convert search text to lower case for case-insensitive comparison
+
+        foreach (var item in allPossibleItems)
+        {
+            if (item.ToLower().Contains(searchText))
+            {
+                filteredItems.Add(item); // Add the item if it contains the search text
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private async void ToggleCheckedState(string itemKey, bool isExtraItem = false)
+    {
+        if (isExtraItem)
+        {
+            if (shoppingList.ExtraItemstoBuy.ContainsKey(itemKey))
+            {
+                shoppingList.ExtraItemstoBuy[itemKey] = !shoppingList.ExtraItemstoBuy[itemKey];
+            }
+        }
+        else
+        {
+            if (shoppingList.IngredientsToBuy.ContainsKey(itemKey))
+            {
+                shoppingList.IngredientsToBuy[itemKey] = !shoppingList.IngredientsToBuy[itemKey];
+            }
+        }
+        //update db with the new change
+        await ShoppingListService.UpdateShoppingListAsync(shoppingList);
+        history = await ShoppingListService.GetIngredientHistory();
+        StateHasChanged();
+    }
+
+    private async void RemoveCheckedItems()
+    {
+        //run thru all checked and add a date to its history
+        foreach(var ingr in shoppingList.IngredientsToBuy)
+        {
+            if(ingr.Value == true)
+            {
+                //do the operation of adding to db
+                await ShoppingListService.AddDateToCheckedIngredient(ingr.Key);
+            }
+        }
+
+        //do same for extra items
+        foreach (var ingr in shoppingList.ExtraItemstoBuy)
+        {
+            if (ingr.Value == true)
+            {
+                //do the operation of adding to db
+                await ShoppingListService.AddDateToCheckedIngredient(ingr.Key);
+            }
+        }
+
+        //clear both lists of checked items
+        shoppingList.IngredientsToBuy = shoppingList.IngredientsToBuy
+                                    .Where(item => item.Value == false)
+                                    .ToDictionary(item => item.Key, item => item.Value);
+
+        shoppingList.ExtraItemstoBuy = shoppingList.ExtraItemstoBuy
+                                    .Where(item => item.Value == false)
+                                    .ToDictionary(item => item.Key, item => item.Value);
+
+        //resave to db
+        await ShoppingListService.UpdateShoppingListAsync(shoppingList);
+        StateHasChanged();
+    }
+
+    private void RemoveItem(string item)
+    {
+        // if (shoppingList.IngredientsToBuy.ContainsKey(item) && shoppingList.IngredientsToBuy[item])
+        // {
+        //     shoppingList.IngredientsToBuy.Remove(item);
+        //     StateHasChanged();
+        // }
+    }
+
+    private void RemoveExtraItem(string item)
+    {
+        // if (shoppingList.ExtraItemstoBuy.ContainsKey(item) && shoppingList.ExtraItemstoBuy[item])
+        // {
+        //     shoppingList.ExtraItemstoBuy.Remove(item);
+        //     StateHasChanged();
+        // }
+    }
 
     private async Task AddExtraItem()
     {
         if (!string.IsNullOrWhiteSpace(newExtraItem))
         {
-            shoppingList.ExtraItemstoBuy.Add(newExtraItem);
+            shoppingList.ExtraItemstoBuy.Add(newExtraItem, false);
             newExtraItem = string.Empty;
 
             // Update the shopping list in the database
@@ -67,7 +242,10 @@
                 {
                     errorMessage = "Failed to update the shopping list.";
                 }
-                else shoppingList = await ShoppingListService.GetShoppingList();
+                else
+                {
+                    shoppingList = await ShoppingListService.GetShoppingList();
+                }
             }
             catch (Exception ex)
             {
@@ -81,7 +259,14 @@
         try
         {
             shoppingList = await ShoppingListService.GetShoppingList();
-        }catch(Exception ex)
+            history = await ShoppingListService.GetIngredientHistory();
+
+            //for the add extra suggestion list
+            allPossibleItems = history.Select(h => h.Name).Distinct().ToList();
+
+            recommendations = ShoppingListService.GetRebuyRecommendations(history);
+        }
+        catch (Exception ex)
         {
             Console.WriteLine($"error ---> {ex.Message}");
         }

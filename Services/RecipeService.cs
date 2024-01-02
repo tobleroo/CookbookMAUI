@@ -58,8 +58,14 @@ namespace MauiCookbook.Services
 
         public async Task UpdateRecipeAsync(Recipe recipe)
         {
-            //_context.Recipes.Update(recipe);
+            
             await _context.SaveRecipeAsync(recipe);
+            
+            //run thu and save all ingredients
+            foreach(var ingr in recipe.Ingredients)
+            {
+                await _context.SaveIngredientAsync(ingr);
+            }
         }
 
         public async Task DeleteRecipeAsync(int id)

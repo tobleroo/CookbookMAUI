@@ -15,20 +15,20 @@ namespace MobileCookbook.Models
         public string ListName { get; set; } = "Shopping list";
 
         [Ignore]
-        public List<string> IngredientsToBuy { get; set; } = new List<string>();
+        public Dictionary<string, bool> IngredientsToBuy { get; set; } = new Dictionary<string, bool>();
         [Ignore]
-        public List<string> ExtraItemstoBuy { get; set; } = new List<string>();
+        public Dictionary<string, bool> ExtraItemstoBuy { get; set; } = new Dictionary<string, bool>();
 
         public string IngredientsToBuySerialized
         {
             get => JsonConvert.SerializeObject(IngredientsToBuy);
-            set => IngredientsToBuy = JsonConvert.DeserializeObject<List<string>>(value ?? string.Empty) ?? new List<string>();
+            set => IngredientsToBuy = JsonConvert.DeserializeObject<Dictionary<string, bool>>(value ?? string.Empty) ?? new Dictionary<string, bool>();
         }
 
         public string ExtraItemstoBuySerialized
         {
             get => JsonConvert.SerializeObject(ExtraItemstoBuy);
-            set => ExtraItemstoBuy = JsonConvert.DeserializeObject<List<string>>(value ?? string.Empty) ?? new List<string>();
+            set => ExtraItemstoBuy = JsonConvert.DeserializeObject<Dictionary<string, bool>>(value ?? string.Empty) ?? new Dictionary<string, bool>();
         }
 
     }
