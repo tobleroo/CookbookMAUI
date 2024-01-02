@@ -8,6 +8,17 @@
 
 <h3 class="text-center my-4">Recipes</h3>
 
+<div class="search-box">
+    <input type="text" class="form-control mb-3" placeholder="Search recipes..." @bind="@searchQuery" @bind:event="oninput" />
+    <select class="form-select mb-3" @bind="selectedMealType">
+        <option value="">All Types</option>
+        @foreach (var type in Enum.GetValues(typeof(RecipeTypes)))
+        {
+            <option value="@type">@type</option>
+        }
+    </select>
+</div>
+
 <button class="btn btn-success mb-3" @onclick="NavigateToAddRecipe">
     <i class="bi bi-plus-lg"></i> Add New Recipe
 </button>
@@ -20,11 +31,11 @@
         }
         else
         {
-            @foreach (var recipe in recipes)
+            @foreach (var recipe in FilteredRecipes)
             {
                 <div class="col-md-4 mb-4">
                     <div class="card h-100 shadow-sm">
-                        @* <img class="card-img-top" src="@recipe.ImageUrl" alt="Recipe Image"> *@
+                        @* <img class="card-img-top" src="" alt="Recipe Image"> *@
                         <div class="card-body">
                             <h5 class="card-title">@recipe.RecipeName</h5>
                             <p class="card-text">@recipe.Description</p>
@@ -75,6 +86,14 @@
 
 @code {
     private List<Recipe> recipes;
+
+    private string searchQuery = "";
+    private RecipeTypes selectedMealType = RecipeTypes.Any;
+
+    private IEnumerable<Recipe> FilteredRecipes =>
+        recipes.Where(r => (r.RecipeName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                            r.Ingredients.Any(i => i.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))) &&
+                            (selectedMealType == RecipeTypes.Any || r.RecipeType == selectedMealType));
 
     protected override async Task OnInitializedAsync()
     {

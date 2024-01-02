@@ -1,0 +1,169 @@
+﻿@page "/planner"
+@using MauiCookbook.Models
+@using MauiCookbook.Services
+@using MobileCookbook.Models
+
+@inject IRecipeService RecipeService
+
+
+<h3>WeeklyPlannerPage</h3>
+
+<div class="container">
+    @foreach (var planDay in finalPlan)
+    {
+        <div class="card mb-3">
+            <div class="card-header">
+                @planDay.Date.ToString("D")
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var meal in planDay.Meals)
+                {
+                    <li class="list-group-item">
+                        <strong>@meal.MealName</strong> - Portions: @meal.Portions
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+<div class="form-group">
+    <label for="dateSelect">Select a Date:</label>
+    <select id="dateSelect" class="form-control" @onchange="OnDateSelected">
+        @foreach (var date in upcomingDates)
+        {
+            <option value="@date.ToString("yyyy-MM-dd")">@date: @date.DayOfWeek</option>
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label for="mealTypeSelect">Select Meal Type:</label>
+    <select id="mealTypeSelect" class="form-control" value="@selectedMealType.ToString()" @onchange="UpdateRecipeDropdown">
+        @foreach (var mealType in Enum.GetValues(typeof(RecipeTypes)))
+        {
+            <option value="@mealType.ToString()">@mealType</option>
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label for="recipeSelect">Select a Recipe:</label>
+    <select id="recipeSelect" class="form-control" @bind="selectedRecipe">
+        @if (selectedRecipes != null)
+        {
+            @foreach (var recipe in selectedRecipes)
+            {
+                <option value="@recipe">@recipe</option>
+            }
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label for="portionInput">Portion Size:</label>
+    <input type="number" id="portionInput" class="form-control" @bind="oneMeal.Portions" />
+</div>
+
+<button class="btn btn-primary" @onclick="AddMealToDay">Add Meal</button>
+
+@code {
+    private MealPlanDay mealPlanDay = new();
+    private OneMeal oneMeal = new();
+
+    private DateTime selectedDate;
+    private RecipeTypes selectedMealType;
+    private string selectedRecipe;
+    private List<DateTime> upcomingDates;
+    private List<Recipe> recipes = new();
+    private Dictionary<string, List<string>> recipesByCategory = new();
+    private List<string> selectedRecipes;
+
+    private List<MealPlanDay> finalPlan = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        upcomingDates = Enumerable.Range(0, 14).Select(offset => DateTime.Today.AddDays(offset)).ToList();
+        selectedDate = DateTime.Today;
+        selectedMealType = RecipeTypes.Any;
+
+        recipes = await RecipeService.GetAllRecipesAsync();
+
+        recipesByCategory.Clear();
+
+        foreach (var recipe in recipes)
+        {
+            var typeKey = recipe.RecipeType.ToString();
+
+            if (!recipesByCategory.ContainsKey(typeKey))
+            {
+                recipesByCategory[typeKey] = new List<string>();
+            }
+
+            recipesByCategory[typeKey].Add(recipe.RecipeName);
+        }
+
+        UpdateRecipeList();
+    }
+
+    private void AddMealToDay()
+    {
+        //check the list of finalPlan if it contains a object with the date, if no
+        // create a new object else get the existing ojbect and add a new object of OneMeal with the right values
+
+        var mealPlanDay = finalPlan.FirstOrDefault(mpd => mpd.Date.Date == selectedDate.Date);
+
+        if (mealPlanDay == null)
+        {
+            mealPlanDay = new MealPlanDay
+                {
+                    Date = selectedDate,
+                    Meals = new List<OneMeal>()
+                };
+            finalPlan.Add(mealPlanDay);
+        }
+
+        var newMeal = new OneMeal
+            {
+                MealName = selectedRecipe,
+                Portions = oneMeal.Portions // Assuming OneMeal class has a Portions property
+            };
+
+        mealPlanDay.Meals.Add(newMeal);
+
+        // Reset the meal input for the next entry
+        oneMeal = new OneMeal();
+
+    }
+
+    private void UpdateRecipeDropdown(ChangeEventArgs e)
+    {
+        if (e.Value is not null)
+        {
+            selectedMealType = Enum.Parse<RecipeTypes>(e.Value.ToString());
+            UpdateRecipeList();
+        }
+    }
+
+    private void UpdateRecipeList()
+    {
+        if (recipesByCategory.TryGetValue(selectedMealType.ToString(), out var recipeList))
+        {
+            selectedRecipes = recipeList;
+            selectedRecipe = recipeList.FirstOrDefault();
+        }
+        else
+        {
+            selectedRecipes = null;
+            selectedRecipe = null;
+        }
+    }
+
+    private void OnDateSelected(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value.ToString(), out var newDate))
+        {
+            selectedDate = newDate;
+        }
+    }
+}
