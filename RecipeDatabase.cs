@@ -27,6 +27,7 @@ namespace MobileCookbook
             await Database.CreateTableAsync<Ingredient>();
             await Database.CreateTableAsync<ShoppingList>();
             await Database.CreateTableAsync<IngredientHistoryData>();
+            await Database.CreateTableAsync<MealPlanDay>();
         }
 
         public async Task<List<Recipe>> GetRecipesAsync()
@@ -39,6 +40,11 @@ namespace MobileCookbook
         {
             await Init();
             return await Database.Table<IngredientHistoryData>().ToListAsync();
+        }
+
+        public async Task ClearShoppingListAsync()
+        {
+            await Database.DeleteAllAsync<ShoppingList>();
         }
 
         public async Task UpsertIngredientHistoryDataAsync(IngredientHistoryData data)
@@ -168,6 +174,33 @@ namespace MobileCookbook
         {
             await Init();
             return await Database.DeleteAsync(shoppingList);
+        }
+
+        public async Task<int> UpsertMealPlanDayAsync(MealPlanDay mealPlanDay)
+        {
+            if (mealPlanDay.ID != 0 && await Database.Table<MealPlanDay>().Where(x => x.ID == mealPlanDay.ID).FirstOrDefaultAsync() != null)
+            {
+                return await Database.UpdateAsync(mealPlanDay);
+            }
+            else
+            {
+                return await Database.InsertAsync(mealPlanDay);
+            }
+        }
+
+        public Task<MealPlanDay> GetMealPlanDayAsync(int id)
+        {
+            return Database.Table<MealPlanDay>().Where(i => i.ID == id).FirstOrDefaultAsync();
+        }
+
+        public Task<List<MealPlanDay>> GetMealPlanDaysAsync()
+        {
+            return Database.Table<MealPlanDay>().ToListAsync();
+        }
+
+        public Task<int> DeleteMealPlanDayAsync(int id)
+        {
+            return Database.DeleteAsync<MealPlanDay>(id);
         }
     }
 }

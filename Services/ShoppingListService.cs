@@ -18,6 +18,11 @@ namespace MobileCookbook.Services
             _recipeDb = recipeDb;
         }
 
+        public async Task ClearTheShoppingList()
+        {
+            await _recipeDb.ClearShoppingListAsync();
+        }
+
         public async Task<ShoppingList> GetShoppingList()
         {
             return await _recipeDb.GetFirstOrDefaultShoppingListAsync();

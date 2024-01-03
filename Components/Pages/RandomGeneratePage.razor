@@ -1,0 +1,35 @@
+﻿@page "/random-recipe"
+@using MauiCookbook.Models
+@using MauiCookbook.Services
+@inject IRecipeService RecipeService
+
+<h3>Random Recipe</h3>
+
+<button class="btn btn-primary" @onclick="GenerateRandomRecipe">Get Random Recipe</button>
+
+@if (randomRecipe != null)
+{
+    <div class="mt-3">
+        <h4>@randomRecipe.RecipeName</h4>
+        @* <p>@randomRecipe.Description</p> *@
+        <!-- Add more details as needed -->
+    </div>
+}
+
+@code {
+    private Recipe randomRecipe;
+
+    private List<Recipe> recipesFromDb = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        recipesFromDb = await RecipeService.GetAllRecipesAsync();
+    }
+
+    private async Task GenerateRandomRecipe()
+    {
+        Random rand = new Random();
+        int randNum = rand.Next(recipesFromDb.Count);
+        randomRecipe = recipesFromDb[randNum];
+    }
+}

@@ -21,6 +21,7 @@ namespace MobileCookbook
 #endif
             builder.Services.AddSingleton<IRecipeService, RecipeService>();
             builder.Services.AddSingleton<IShoppingListService, ShoppingListService>();
+            builder.Services.AddSingleton<IPlanningService, PlanningService>();
             builder.Services.AddSingleton<RecipeDatabase>();
             return builder.Build();
         }

@@ -1,12 +1,19 @@
 ﻿@page "/planner"
+@using CommunityToolkit.Maui.Alerts
+@using CommunityToolkit.Maui.Core
 @using MauiCookbook.Models
 @using MauiCookbook.Services
 @using MobileCookbook.Models
+@using MobileCookbook.Services
 
 @inject IRecipeService RecipeService
-
+@inject IPlanningService planningService
+@inject IShoppingListService shoppingService
+@inject IJSRuntime JsRuntime
 
 <h3>WeeklyPlannerPage</h3>
+<button @onclick="savePlanToDb">Save plan</button>
+<button @onclick=" CreateShoppingListFromPlan">create shoppinglist</button>
 
 <div class="container">
     @foreach (var planDay in finalPlan)
@@ -14,12 +21,14 @@
         <div class="card mb-3">
             <div class="card-header">
                 @planDay.Date.ToString("D")
+                <button @onclick="() => deletePlanDay(planDay.ID)">del</button>
             </div>
             <ul class="list-group list-group-flush">
                 @foreach (var meal in planDay.Meals)
                 {
                     <li class="list-group-item">
                         <strong>@meal.MealName</strong> - Portions: @meal.Portions
+                        <button @onclick="() => deleteMeal(planDay.ID, meal.MealName)">del</button>
                     </li>
                 }
             </ul>
@@ -32,7 +41,7 @@
     <select id="dateSelect" class="form-control" @onchange="OnDateSelected">
         @foreach (var date in upcomingDates)
         {
-            <option value="@date.ToString("yyyy-MM-dd")">@date: @date.DayOfWeek</option>
+            <option value="@date.ToString("yyyy-MM-dd")">@date.ToString("yyyy-MM-dd"): @date.DayOfWeek</option>
         }
     </select>
 </div>
@@ -52,6 +61,7 @@
     <select id="recipeSelect" class="form-control" @bind="selectedRecipe">
         @if (selectedRecipes != null)
         {
+            <option value="random">Random</option>
             @foreach (var recipe in selectedRecipes)
             {
                 <option value="@recipe">@recipe</option>
@@ -62,20 +72,20 @@
 
 <div class="form-group">
     <label for="portionInput">Portion Size:</label>
-    <input type="number" id="portionInput" class="form-control" @bind="oneMeal.Portions" />
+    <input type="number" id="portionInput" class="form-control" @bind="oneMeal.Portions" min=1 />
 </div>
 
 <button class="btn btn-primary" @onclick="AddMealToDay">Add Meal</button>
 
 @code {
     private MealPlanDay mealPlanDay = new();
-    private OneMeal oneMeal = new();
+    private OneMeal oneMeal = new(){Portions = 1};
 
     private DateTime selectedDate;
     private RecipeTypes selectedMealType;
     private string selectedRecipe;
     private List<DateTime> upcomingDates;
-    private List<Recipe> recipes = new();
+    private List<Recipe> recipesFromDb = new();
     private Dictionary<string, List<string>> recipesByCategory = new();
     private List<string> selectedRecipes;
 
@@ -83,15 +93,18 @@
 
     protected override async Task OnInitializedAsync()
     {
-        upcomingDates = Enumerable.Range(0, 14).Select(offset => DateTime.Today.AddDays(offset)).ToList();
-        selectedDate = DateTime.Today;
+        upcomingDates = Enumerable.Range(0, 14)
+                                  .Select(offset => DateTime.Today.AddDays(offset).Date) // Use the Date property
+                                  .ToList();
+        selectedDate = DateTime.Today.Date; // Use the Date property
+
         selectedMealType = RecipeTypes.Any;
 
-        recipes = await RecipeService.GetAllRecipesAsync();
+        recipesFromDb = await RecipeService.GetAllRecipesAsync();
 
         recipesByCategory.Clear();
 
-        foreach (var recipe in recipes)
+        foreach (var recipe in recipesFromDb)
         {
             var typeKey = recipe.RecipeType.ToString();
 
@@ -104,6 +117,55 @@
         }
 
         UpdateRecipeList();
+
+        //get the mealplan from db
+
+        //if older than todays dont show
+        var allPlans = await planningService.GetMealPlanDaysAsync();
+        foreach(var plan in allPlans)
+        {
+            //is plan is not older than todays date 
+            if(plan.Date >= DateTime.Today)
+            {
+                //then we add to list to display
+                finalPlan.Add(plan);
+            }
+        }
+    }
+
+    private async void deletePlanDay(int planID)
+    {
+        await planningService.DeleteMealPlanDayAsync(planID);
+        finalPlan.RemoveAll(plan => plan.ID == planID);
+        StateHasChanged();
+    }
+
+    private async void savePlanToDb()
+    {
+        //take the list and save each day to the db as a row
+        foreach(var meal in finalPlan)
+        {
+            await planningService.UpsertMealPlanDayAsync(meal);
+        }
+    }
+
+    private void deleteMeal(int dayID, string mealNameToDel)
+    {
+        var mealPlanDay = finalPlan.FirstOrDefault(mpd => mpd.ID == dayID);
+        if (mealPlanDay != null)
+        {
+            var mealToRemove = mealPlanDay.Meals.FirstOrDefault(meal => meal.MealName == mealNameToDel);
+            if (mealToRemove != null)
+            {
+                mealPlanDay.Meals.Remove(mealToRemove);
+            }
+        }
+
+        //check if day is empty, then delete whole day from list
+        if(mealPlanDay?.Meals.Count == 0)
+        {
+            finalPlan.Remove(mealPlanDay);
+        }
     }
 
     private void AddMealToDay()
@@ -123,17 +185,43 @@
             finalPlan.Add(mealPlanDay);
         }
 
-        var newMeal = new OneMeal
-            {
-                MealName = selectedRecipe,
-                Portions = oneMeal.Portions // Assuming OneMeal class has a Portions property
-            };
+        //check if client chose random meal
 
+        Random random = new Random();
+        var newMeal = new OneMeal();
+
+        if(selectedRecipe == "random")
+        {
+
+            // -- randomly generate a meal -- 
+
+            //get all recipies from type selection
+            if(selectedMealType == RecipeTypes.Any)
+            {
+                int randomNumber = random.Next(recipesFromDb.Count);
+                newMeal.MealName = recipesFromDb[randomNumber].RecipeName;
+            }
+            else
+            {
+                var mealsFromType = recipesByCategory[selectedMealType.ToString()];
+                int randomNumber = random.Next(mealsFromType.Count);
+                newMeal.MealName = mealsFromType[randomNumber];
+            }
+            newMeal.Portions = oneMeal.Portions;
+        }
+        else
+        {
+            newMeal.MealName = selectedRecipe;
+            newMeal.Portions = oneMeal.Portions;
+        }
+
+        //set the id of the original recipe data
+        var originalMeal = recipesFromDb.Where(rec => rec.RecipeName == newMeal.MealName).First();
+        newMeal.Id = originalMeal.ID;
         mealPlanDay.Meals.Add(newMeal);
 
         // Reset the meal input for the next entry
-        oneMeal = new OneMeal();
-
+        oneMeal = new OneMeal(){Portions = 1};
     }
 
     private void UpdateRecipeDropdown(ChangeEventArgs e)
@@ -147,7 +235,12 @@
 
     private void UpdateRecipeList()
     {
-        if (recipesByCategory.TryGetValue(selectedMealType.ToString(), out var recipeList))
+        if (selectedMealType == RecipeTypes.Any)
+        {
+            selectedRecipes = recipesByCategory.SelectMany(kv => kv.Value).Distinct().ToList();
+            selectedRecipe = selectedRecipes.FirstOrDefault();
+        }
+        else if (recipesByCategory.TryGetValue(selectedMealType.ToString(), out var recipeList))
         {
             selectedRecipes = recipeList;
             selectedRecipe = recipeList.FirstOrDefault();
@@ -165,5 +258,28 @@
         {
             selectedDate = newDate;
         }
+    }
+
+    private async void CreateShoppingListFromPlan()
+    {
+        await shoppingService.ClearTheShoppingList();
+        //flatten the finalplan to get all wanted recipes
+        var allMeals = finalPlan.SelectMany(plan => plan.Meals).ToList();
+
+
+        //then add the new
+        foreach(var newShoppingRecipe in allMeals)
+        {
+            await shoppingService.AddRecipetoShoppingList(newShoppingRecipe.Id, newShoppingRecipe.Portions);
+        }
+
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        string text = "Successful add!";
+        ToastDuration duration = ToastDuration.Short;
+        double fontSize = 14;
+
+        var toast = Toast.Make(text, duration, fontSize);
+
+        await toast.Show(cancellationTokenSource.Token);
     }
 }
