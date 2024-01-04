@@ -68,6 +68,11 @@ namespace MauiCookbook.Services
             }
         }
 
+        public async Task DeleteIngredient(Ingredient ingr)
+        {
+            await _context.DeleteIngredientAsync(ingr);
+        }
+
         public async Task DeleteRecipeAsync(int id)
         {
             var recipe = await _context.GetRecipeById(id);

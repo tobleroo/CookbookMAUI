@@ -14,5 +14,6 @@ namespace MauiCookbook.Services
         Task AddRecipeAsync(Recipe recipe, List<Ingredient> ingredients);
         Task UpdateRecipeAsync(Recipe recipe);
         Task DeleteRecipeAsync(int id);
+        Task DeleteIngredient(Ingredient ingr);
     }
 }

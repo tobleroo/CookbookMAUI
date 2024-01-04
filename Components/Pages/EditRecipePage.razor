@@ -15,6 +15,7 @@
 <h3 class="text-center my-4">Add New Recipe</h3>
 
 <div class="container">
+
     <form @onsubmit="HandleSubmit">
         @if (RecipeId.HasValue)
         {
@@ -59,6 +60,7 @@
             @foreach (var step in recipe.Steps)
             {
                 <p class="ps-3">@step</p>
+                <button @onclick="() => RemoveStep(step)">del</button>
             }
             <div class="input-group mb-3">
                 <input type="text" class="form-control" @bind="newStepName" placeholder="Add a step">
@@ -77,6 +79,7 @@
                 @foreach (var ingr in ingredients)
                 {
                     <p class="ps-3">@ingr.Name (@ingr.Quantity @ingr.Unit)</p>
+                    <button @onclick="() => RemoveIngr(ingr)">del</button>
                 }
             }
             <div class="row g-3">
@@ -130,6 +133,18 @@
         {
             recipe = new Recipe() { RecipeName = "not set" };
         }
+    }
+
+    private void RemoveStep(string step)
+    {
+        recipe.Steps.Remove(step);
+    }
+
+    private async void RemoveIngr(Ingredient ingr)
+    {
+        //remove ingredient from its separate db table
+        await RecipeService.DeleteIngredient(ingr);
+        recipe.Ingredients.Remove(ingr);
     }
 
     private void AddNewIngredient()

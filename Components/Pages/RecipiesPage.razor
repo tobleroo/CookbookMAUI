@@ -5,6 +5,7 @@
 
 @using MauiCookbook.Models
 @using MauiCookbook.Services
+@using System.Reflection
 
 <h3 class="text-center my-4">Recipes</h3>
 
@@ -35,7 +36,7 @@
             {
                 <div class="col-md-4 mb-4">
                     <div class="card h-100 shadow-sm">
-                        @* <img class="card-img-top" src="" alt="Recipe Image"> *@
+                        @* <img class="card-img-top" src="" alt="Recipe Image" style="object-fit: cover; height: 200px;"> *@
                         <div class="card-body">
                             <h5 class="card-title">@recipe.RecipeName</h5>
                             <p class="card-text">@recipe.Description</p>

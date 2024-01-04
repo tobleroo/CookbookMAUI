@@ -22,6 +22,7 @@
             <div class="card-header">
                 @planDay.Date.ToString("D")
                 <button @onclick="() => deletePlanDay(planDay.ID)">del</button>
+                <button @onclick="() => CreateShoppinglistFromOneDay(planDay.Date)">Add day to shoppinglist</button>
             </div>
             <ul class="list-group list-group-flush">
                 @foreach (var meal in planDay.Meals)
@@ -258,6 +259,27 @@
         {
             selectedDate = newDate;
         }
+    }
+
+    private async void CreateShoppinglistFromOneDay(DateTime dateOfDayWanted)
+    {
+        var selectedDate = finalPlan.Where(planDay => planDay.Date.Equals(dateOfDayWanted)).First();
+
+        //get all meals from that day
+        foreach(var meal in selectedDate.Meals)
+        {
+            await shoppingService.AddRecipetoShoppingList(meal.Id, meal.Portions);
+        }
+
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        string text = "Successful add!";
+        ToastDuration duration = ToastDuration.Short;
+        double fontSize = 14;
+
+        var toast = Toast.Make(text, duration, fontSize);
+
+        await toast.Show(cancellationTokenSource.Token);
+
     }
 
     private async void CreateShoppingListFromPlan()

@@ -91,6 +91,12 @@ namespace MobileCookbook
             return await Database.DeleteAsync(recipe);
         }
 
+        public async Task<int> DeleteIngredientAsync(Ingredient ingr)
+        {
+            await Init();
+            return await Database.DeleteAsync(ingr);
+        }
+
         public async Task<int> DeleteRecipeByIdAsync(int recipeId)
         {
             await Init();

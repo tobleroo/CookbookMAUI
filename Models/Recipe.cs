@@ -14,6 +14,8 @@ namespace MauiCookbook.Models
         public int ID { get; set; }
         public string RecipeName { get; set; }
         public string? Description { get; set; } = "not set";
+
+        //public string? ImageAddress { get; set; } = "resource://MobileCookbook.Resources.Images.noimage.jpg";
         public string StepsSerialized
         {
             get => JsonConvert.SerializeObject(Steps);
