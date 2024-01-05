@@ -1,5 +1,6 @@
 ﻿using MauiCookbook.Models;
 using MobileCookbook;
+using MobileCookbook.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -78,6 +79,8 @@ namespace MauiCookbook.Services
             var recipe = await _context.GetRecipeById(id);
             if (recipe != null)
             {
+                //delete picture if exists
+                await ImageService.DeleteImage(recipe.ImageAddress);
                 await _context.DeleteIngredientsByRecipeIdAsync(id);
                 await _context.DeleteRecipeByIdAsync(id);
             }

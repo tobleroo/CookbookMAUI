@@ -94,5 +94,24 @@ namespace MobileCookbook.Utils
                 return null;
             }
         }
+
+        public static async Task<bool> DeleteImage(string imagePath)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(imagePath) && File.Exists(imagePath))
+                {
+                    File.Delete(imagePath);
+                    Console.WriteLine("image deleted!");
+                    return true; // Successfully deleted
+                }
+                return false; // File does not exist or path is null/empty
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting image: {ex.Message}");
+                return false; // Error occurred during deletion
+            }
+        }
     }
 }
