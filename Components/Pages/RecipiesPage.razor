@@ -6,6 +6,7 @@
 @using MauiCookbook.Models
 @using MauiCookbook.Services
 @using System.Reflection
+@using MobileCookbook.Utils
 
 <h3 class="text-center my-4">Recipes</h3>
 
@@ -36,41 +37,44 @@
             {
                 <div class="col-md-4 mb-4">
                     <div class="card h-100 shadow-sm">
-                        @* <img class="card-img-top" src="" alt="Recipe Image" style="object-fit: cover; height: 200px;"> *@
+                        @* @if(recipe.ImageAddress != null)
+                        {
+                            <img class="card-img-top" src="@GetImageSource(recipe)" alt="Recipe Image" style="object-fit: cover; height: 200px;">
+                        } *@
                         <div class="card-body">
-                            <h5 class="card-title">@recipe.RecipeName</h5>
-                            <p class="card-text">@recipe.Description</p>
-                            <p class="text-muted">ID: @recipe.ID</p>
+                        <h5 class="card-title">@recipe.RecipeName</h5>
+                        <p class="card-text">@recipe.Description</p>
+                        <p class="text-muted">ID: @recipe.ID</p>
 
-                            <h6>Steps:</h6>
-                            @if (recipe.Steps != null && recipe.Steps.Any())
-                            {
-                                <ul class="list-unstyled">
-                                    @foreach (var step in recipe.Steps)
-                                    {
-                                        <li>@step</li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <p>No steps available.</p>
-                            }
+                        <h6>Steps:</h6>
+                        @if (recipe.Steps != null && recipe.Steps.Any())
+                        {
+                            <ul class="list-unstyled">
+                                @foreach (var step in recipe.Steps)
+                                {
+                                    <li>@step</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>No steps available.</p>
+                        }
 
-                            <h6>Ingredients:</h6>
-                            @if (recipe.Ingredients != null && recipe.Ingredients.Any())
-                            {
-                                <ul class="list-unstyled">
-                                    @foreach (var ingr in recipe.Ingredients)
-                                    {
-                                        <li>@ingr.Name (@ingr.Quantity @ingr.Unit)</li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <p>No ingredients available.</p>
-                            }
+                        <h6>Ingredients:</h6>
+                        @if (recipe.Ingredients != null && recipe.Ingredients.Any())
+                        {
+                            <ul class="list-unstyled">
+                                @foreach (var ingr in recipe.Ingredients)
+                                {
+                                    <li>@ingr.Name (@ingr.Quantity @ingr.Unit)</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>No ingredients available.</p>
+                        }
                         </div>
                         <div class="card-footer d-flex justify-content-between align-items-center">
                             <small class="text-muted">Cook time: @recipe.CookTime minutes</small>
@@ -80,6 +84,7 @@
                         </div>
                     </div>
                 </div>
+                <button @onclick="() => GoToRecipe(recipe.ID)">view @recipe.RecipeName</button>
             }
         }
     </div>
@@ -109,6 +114,19 @@
             // Optionally, set a flag to display an error message in the UI
         }
     }
+
+    private void GoToRecipe(int recipeID)
+    {
+        NavigationManager.NavigateTo($"/recipe/{recipeID}");
+    }
+
+    // private string GetImageSource(Recipe recipe)
+    // {
+    //     if (!string.IsNullOrEmpty(recipe.ImageAddress))
+    //     {
+    //         return $"data:image/png;base64,{ImageService.LoadImageFromStorage(recipe.ImageAddress).Result}";
+    //     }else return null;
+    // }
 
     private void NavigateToAddRecipe()
     {

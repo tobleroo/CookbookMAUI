@@ -1,0 +1,76 @@
+﻿@page "/recipe/{RecipeId:int}"
+@using MauiCookbook.Models
+@using MauiCookbook.Services
+@using MobileCookbook.Utils
+
+@inject IRecipeService RecipeService
+
+<PageTitle>Recipe Details</PageTitle>
+
+<div class="container mt-3">
+    @if (recipe == null)
+    {
+        <p>Loading recipe details...</p>
+    }
+    else
+    {
+        <div class="card mb-3">
+            @if(recipe.ImageAddress != null)
+            {
+                <img src="@($"data:image/png;base64,{imageBase64}")" class="card-img-top" alt="@recipe.RecipeName">
+            }
+            <div class="card-body">
+                <h3 class="card-title">@recipe.RecipeName</h3>
+                <p class="card-text">@recipe.Description</p>
+                <p><strong>Cook Time:</strong> @recipe.CookTime minutes</p>
+                <p><strong>Difficulty:</strong> @recipe.Difficulty</p>
+                <p><strong>Type:</strong> @recipe.RecipeType</p>
+                <p><strong>Is Vegan:</strong> @(recipe.IsVegan ? "Yes" : "No")</p>
+                <p><strong>Portions:</strong> @recipe.Portions</p>
+                <p><strong>Spiciness:</strong> @recipe.Spicyness / 5</p>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Ingredients</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var ingredient in recipe.Ingredients)
+                {
+                    <li class="list-group-item">@ingredient.Name (@ingredient.Quantity) @ingredient.Unit</li>
+                }
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Steps</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var step in recipe.Steps)
+                {
+                    <li class="list-group-item">@step</li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int RecipeId { get; set; }
+    private Recipe recipe;
+    private string imageBase64;
+
+    protected override async Task OnInitializedAsync()
+    {
+        recipe = await RecipeService.GetRecipeByIdAsync(RecipeId);
+        if (!string.IsNullOrEmpty(recipe.ImageAddress))
+        {
+            imageBase64 = await ImageService.LoadImageFromStorage(recipe.ImageAddress);
+        }
+    }
+
+    private string? GetImageSource(Recipe recipe)
+    {
+        return string.IsNullOrEmpty(recipe.ImageAddress)
+            ? null // Path to default image
+            : $"data:image/png;base64,{ImageService.LoadImageFromStorage(recipe.ImageAddress).Result}";
+    }
+}

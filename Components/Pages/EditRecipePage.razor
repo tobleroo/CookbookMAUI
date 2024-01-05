@@ -5,6 +5,7 @@
 @using MauiCookbook.Services
 @using MobileCookbook.Services
 @using CommunityToolkit.Maui.Alerts;
+@using MobileCookbook.Utils
 
 
 @inject IRecipeService RecipeService
@@ -15,6 +16,26 @@
 <h3 class="text-center my-4">Add New Recipe</h3>
 
 <div class="container">
+
+    <div class="row my-4">
+        <div class="col text-center">
+            <button class="btn btn-primary" @onclick="PickImage">Pick Image from Gallery</button>
+            <button class="btn btn-secondary" @onclick="TakePhoto">Take a New Picture</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(base64Image))
+    {
+        <div class="row">
+            <div class="col text-center">
+                <img src="data:image/png;base64,@base64Image" alt="Selected Image" class="img-fluid" />
+            </div>
+        </div>
+    }
+    else
+    {
+        <p>no photo selected!</p>
+    }
 
     <form @onsubmit="HandleSubmit">
         @if (RecipeId.HasValue)
@@ -122,16 +143,72 @@
     [Parameter]
     public int? RecipeId { get; set; }
 
+    private string base64Image;
+
     protected override async Task OnInitializedAsync()
     {
         if (RecipeId.HasValue)
         {
             recipe = await RecipeService.GetRecipeByIdAsync(RecipeId.Value);
             ingredients = recipe.Ingredients;
+
+            if (!string.IsNullOrEmpty(recipe.ImageAddress))
+            {
+                base64Image = await LoadImageFromPath(recipe.ImageAddress);
+            }
         }
         else
         {
             recipe = new Recipe() { RecipeName = "not set" };
+        }
+    }
+
+    private async Task<string> LoadImageFromPath(string imagePath)
+    {
+        try
+        {
+            if (File.Exists(imagePath))
+            {
+                byte[] imageBytes = await File.ReadAllBytesAsync(imagePath);
+                return Convert.ToBase64String(imageBytes);
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading image: {ex.Message}");
+            return null;
+        }
+    }
+
+    private async Task PickImage()
+    {
+        var imageBase64 = await ImageService.PickImage();
+        if (!string.IsNullOrWhiteSpace(imageBase64))
+        {
+            base64Image = imageBase64;
+        }
+    }
+
+    private async Task TakePhoto()
+    {
+        var imageBase64 = await ImageService.TakePhoto();
+        if (!string.IsNullOrWhiteSpace(imageBase64))
+        {
+            base64Image = imageBase64;
+        }
+    }
+
+    private async Task SaveImageAndSetPath()
+    {
+        if (!string.IsNullOrEmpty(base64Image))
+        {
+            string fileName = $"{Guid.NewGuid()}.png"; // Generates a unique file name
+            var savedImagePath = await ImageService.SaveImageToLocalStorage(base64Image, fileName);
+            if (!string.IsNullOrEmpty(savedImagePath))
+            {
+                recipe.ImageAddress = savedImagePath;
+            }
         }
     }
 
@@ -161,10 +238,12 @@
         {
             if (RecipeId.HasValue)
             {
+                await SaveImageAndSetPath();
                 await RecipeService.UpdateRecipeAsync(recipe);
             }
             else
             {
+                await SaveImageAndSetPath();
                 await RecipeService.AddRecipeAsync(recipe, ingredients);
             }
             Console.WriteLine("-----success----");
