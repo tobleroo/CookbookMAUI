@@ -72,6 +72,11 @@ namespace MobileCookbook.Services
             }
         }
 
+        public async Task SaveNewShopinglist(ShoppingList shoppingList)
+        {
+            await _recipeDb.UpsertShoppingListAsync(shoppingList);
+        }
+
         public async Task<List<IngredientHistoryData>> GetIngredientHistory()
         {
             try

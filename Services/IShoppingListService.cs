@@ -15,6 +15,7 @@ namespace MobileCookbook.Services
         Task<List<IngredientHistoryData>> GetIngredientHistory();
         List<string> GetRebuyRecommendations(List<IngredientHistoryData> history);
         Task<ShoppingList> GetShoppingList();
+        Task SaveNewShopinglist(ShoppingList shoppingList);
         Task<bool> UpdateShoppingListAsync(ShoppingList shoplist);
     }
 }

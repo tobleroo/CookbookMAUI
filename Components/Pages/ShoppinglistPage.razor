@@ -229,6 +229,12 @@
 
     private async Task AddExtraItem()
     {
+        //if shoppinglsit id is 0, then it does not yet exists and cannot be updated, so save new shoppinglsit first
+        if(shoppingList.Id == 0)
+        {
+            await ShoppingListService.SaveNewShopinglist(shoppingList);
+        }
+
         if (!string.IsNullOrWhiteSpace(newExtraItem))
         {
             shoppingList.ExtraItemstoBuy.Add(newExtraItem, false);
