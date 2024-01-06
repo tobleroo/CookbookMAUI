@@ -36,55 +36,26 @@
             @foreach (var recipe in FilteredRecipes)
             {
                 <div class="col-md-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        @* @if(recipe.ImageAddress != null)
-                        {
-                            <img class="card-img-top" src="@GetImageSource(recipe)" alt="Recipe Image" style="object-fit: cover; height: 200px;">
-                        } *@
-                        <div class="card-body">
-                        <h5 class="card-title">@recipe.RecipeName</h5>
-                        <p class="card-text">@recipe.Description</p>
-                        <p class="text-muted">ID: @recipe.ID</p>
-
-                        <h6>Steps:</h6>
-                        @if (recipe.Steps != null && recipe.Steps.Any())
-                        {
-                            <ul class="list-unstyled">
-                                @foreach (var step in recipe.Steps)
+                    <a @onclick="() => GoToRecipe(recipe.ID)" class="text-decoration-none">
+                        <div class="card h-100 shadow-sm">
+                            <div class="image-container">
+                                @if (recipeImages.TryGetValue(recipe.ID, out var imgBase64) && !string.IsNullOrEmpty(imgBase64))
                                 {
-                                    <li>@step</li>
+                                    <img class="card-img-top" src="@($"data:image/png;base64,{imgBase64}")" alt="Recipe Image">
                                 }
-                            </ul>
-                        }
-                        else
-                        {
-                            <p>No steps available.</p>
-                        }
-
-                        <h6>Ingredients:</h6>
-                        @if (recipe.Ingredients != null && recipe.Ingredients.Any())
-                        {
-                            <ul class="list-unstyled">
-                                @foreach (var ingr in recipe.Ingredients)
-                                {
-                                    <li>@ingr.Name (@ingr.Quantity @ingr.Unit)</li>
-                                }
-                            </ul>
-                        }
-                        else
-                        {
-                            <p>No ingredients available.</p>
-                        }
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">@recipe.RecipeName</h5>
+                            </div>
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Cook time: @recipe.CookTime minutes</small>
+                                <button class="btn btn-outline-primary btn-sm" @onclick:stopPropagation="true" @onclick="() => EditRecipe(recipe.ID)">
+                                    <i class="bi bi-pencil-square"></i> Edit
+                                </button>
+                            </div>
                         </div>
-                        <div class="card-footer d-flex justify-content-between align-items-center">
-                            <small class="text-muted">Cook time: @recipe.CookTime minutes</small>
-                            <button class="btn btn-outline-primary btn-sm" @onclick="() => EditRecipe(recipe.ID)">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </button>
-                        </div>
-                    </div>
+                    </a>
                 </div>
-                <button @onclick="() => GoToRecipe(recipe.ID)">view @recipe.RecipeName</button>
             }
         }
     </div>
@@ -92,6 +63,7 @@
 
 @code {
     private List<Recipe> recipes;
+    private Dictionary<int, string> recipeImages = new Dictionary<int, string>();
 
     private string searchQuery = "";
     private RecipeTypes selectedMealType = RecipeTypes.Any;
@@ -106,7 +78,14 @@
         try
         {
             recipes = await RecipeService.GetAllRecipesAsync();
-            StateHasChanged();
+            foreach (var recipe in recipes)
+            {
+                if (!string.IsNullOrEmpty(recipe.ImageAddress) && !recipeImages.ContainsKey(recipe.ID))
+                {
+                    var base64Image = await ImageService.LoadImageFromStorage(recipe.ImageAddress);
+                    recipeImages[recipe.ID] = base64Image;
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -120,13 +99,13 @@
         NavigationManager.NavigateTo($"/recipe/{recipeID}");
     }
 
-    // private string GetImageSource(Recipe recipe)
-    // {
-    //     if (!string.IsNullOrEmpty(recipe.ImageAddress))
-    //     {
-    //         return $"data:image/png;base64,{ImageService.LoadImageFromStorage(recipe.ImageAddress).Result}";
-    //     }else return null;
-    // }
+    private string GetImageSource(Recipe recipe)
+    {
+        if (!string.IsNullOrEmpty(recipe.ImageAddress))
+        {
+            return $"data:image/png;base64,{ImageService.LoadImageFromStorage(recipe.ImageAddress).Result}";
+        }else return null;
+    }
 
     private void NavigateToAddRecipe()
     {

@@ -78,6 +78,11 @@
 
 <button class="btn btn-primary" @onclick="AddMealToDay">Add Meal</button>
 
+@* for the g'damn soft keyboard overlapping *@
+<div style="width: 100vw; height: 45vh;">
+    <!-- Content here -->
+</div>
+
 @code {
     private MealPlanDay mealPlanDay = new();
     private OneMeal oneMeal = new(){Portions = 1};

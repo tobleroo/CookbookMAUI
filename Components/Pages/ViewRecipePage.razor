@@ -1,9 +1,14 @@
 ﻿@page "/recipe/{RecipeId:int}"
+@using CommunityToolkit.Maui.Alerts
+@using CommunityToolkit.Maui.Core
 @using MauiCookbook.Models
 @using MauiCookbook.Services
+@using MobileCookbook.Services
 @using MobileCookbook.Utils
 
 @inject IRecipeService RecipeService
+@inject IShoppingListService shoppinglistService
+@inject IJSRuntime JsRuntime
 
 <PageTitle>Recipe Details</PageTitle>
 
@@ -50,13 +55,25 @@
                 }
             </ul>
         </div>
+        <div class="add-to-shopping-box mt-3">
+            <label>Generate portions to shoppinglist:</label>
+            <input type="number" class="form-control" placeholder="Portions" @bind="portionsForShoping" min="1" />
+            <button class="btn btn-success mt-2" @onclick="AddRecipeToShoppingList">Add to Shopping List</button>
+        </div>
     }
+
+</div>
+
+@* for the g'damn soft keyboard overlapping *@
+<div style="width: 100vw; height: 45vh;">
+    <!-- Content here -->
 </div>
 
 @code {
     [Parameter] public int RecipeId { get; set; }
     private Recipe recipe;
     private string imageBase64;
+    private int portionsForShoping = 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,5 +89,20 @@
         return string.IsNullOrEmpty(recipe.ImageAddress)
             ? null // Path to default image
             : $"data:image/png;base64,{ImageService.LoadImageFromStorage(recipe.ImageAddress).Result}";
+    }
+
+    private async void AddRecipeToShoppingList()
+    {
+        var success = await shoppinglistService.AddRecipetoShoppingList(RecipeId, portionsForShoping);
+
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        string text = "Successful add!";
+        ToastDuration duration = ToastDuration.Short;
+        double fontSize = 14;
+
+        var toast = Toast.Make(text, duration, fontSize);
+
+        await toast.Show(cancellationTokenSource.Token);
+        
     }
 }

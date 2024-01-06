@@ -14,6 +14,7 @@ namespace MobileCookbook
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
             }).UseMauiCommunityToolkit();
+            builder.UseMauiCommunityToolkit();
             builder.Services.AddMauiBlazorWebView();
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

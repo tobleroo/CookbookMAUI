@@ -1,6 +1,7 @@
 ﻿@page "/newrecipe"
 @page "/newrecipe/{RecipeId:int}"
 @using CommunityToolkit.Maui.Core
+@using CommunityToolkit.Maui.Core.Platform
 @using MauiCookbook.Models
 @using MauiCookbook.Services
 @using MobileCookbook.Services
@@ -15,7 +16,7 @@
 
 <h3 class="text-center my-4">Add New Recipe</h3>
 
-<div class="container">
+<div class="container" style="overflow-y: auto; height: 100vh;">
 
     <div class="row my-4">
         <div class="col text-center">
@@ -122,15 +123,12 @@
         <div class="text-center">
             <button type="submit" class="btn btn-primary">Add Recipe</button>
         </div>
-
-        @if (RecipeId.HasValue)
-        {  
-            <div class="add-toshopping-box">
-                <input type="number" placeholder="portions" @bind="portionsForShoping" min=1/>
-                <button @onclick="AddRecipeToShoppingList">Add</button>
-            </div>
-        }
     </form>
+
+    @* for the g'damn soft keyboard overlapping *@
+    <div style="width: 100vw; height: 45vh;">
+        <!-- Content here -->
+    </div>
 </div>
 
 @code {
@@ -138,7 +136,7 @@
     private string newStepName = "";
     private Ingredient newIngr = new();
     private List<Ingredient> ingredients = new();
-    private int portionsForShoping = 1;
+    
 
     [Parameter]
     public int? RecipeId { get; set; }
@@ -275,23 +273,6 @@
         {
             await RecipeService.DeleteRecipeAsync(RecipeId.Value);
             NavigationManager.NavigateTo("/recipes"); 
-        }
-    }
-
-    private async void AddRecipeToShoppingList()
-    {
-        if (RecipeId.HasValue)
-        {
-            var success = await shoppinglistService.AddRecipetoShoppingList(RecipeId.Value, portionsForShoping);
-
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            string text = "Successful add!";
-            ToastDuration duration = ToastDuration.Short;
-            double fontSize = 14;
-
-            var toast = Toast.Make(text, duration, fontSize);
-
-            await toast.Show(cancellationTokenSource.Token);
         }
     }
 
