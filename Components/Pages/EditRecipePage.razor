@@ -121,7 +121,7 @@
         </div>
 
         <div class="text-center">
-            <button type="submit" class="btn btn-primary">Add Recipe</button>
+            <button type="submit" class="btn btn-primary">@SaveBtnText</button>
         </div>
     </form>
 
@@ -136,7 +136,7 @@
     private string newStepName = "";
     private Ingredient newIngr = new();
     private List<Ingredient> ingredients = new();
-    
+    private string SaveBtnText = "Add";
 
     [Parameter]
     public int? RecipeId { get; set; }
@@ -154,6 +154,7 @@
             {
                 base64Image = await LoadImageFromPath(recipe.ImageAddress);
             }
+            SaveBtnText = "Update";
         }
         else
         {
@@ -244,7 +245,12 @@
                 await SaveImageAndSetPath();
                 await RecipeService.AddRecipeAsync(recipe, ingredients);
             }
-            Console.WriteLine("-----success----");
+            // Console.WriteLine("-----success----");
+
+            // currently it goes back but forward in navigation stack
+            // recipies -> edit/add -> recipies || should be recipes -> <- edit/add
+
+            // NavigationManager.NavigateTo("/recipes");
         }
         catch (Exception ex)
         {

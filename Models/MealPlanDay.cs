@@ -24,7 +24,7 @@ namespace MobileCookbook.Models
         }
 
         [Ignore]
-        public List<OneMeal> Meals { get; set; }
+        public List<OneMeal> Meals { get; set; } = new List<OneMeal>();
 
         public string MealsSerialized
         {

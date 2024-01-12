@@ -12,8 +12,12 @@
 @inject IJSRuntime JsRuntime
 
 <h3>WeeklyPlannerPage</h3>
-<button @onclick="savePlanToDb">Save plan</button>
-<button @onclick=" CreateShoppingListFromPlan">create shoppinglist</button>
+
+@if (finalPlan.Any())
+{
+    <button @onclick="savePlanToDb">Save plan</button>
+    <button @onclick=" CreateShoppingListFromPlan">create shoppinglist</button>  
+}
 
 <div class="container">
     @foreach (var planDay in finalPlan)
