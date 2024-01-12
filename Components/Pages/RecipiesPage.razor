@@ -38,12 +38,12 @@
                 <div class="col-md-4 mb-4">
                     <a @onclick="() => GoToRecipe(recipe.ID)" class="text-decoration-none">
                         <div class="card h-100 shadow-sm">
-                            <div class="image-container">
+                            @* <div class="image-container">
                                 @if (recipeImages.TryGetValue(recipe.ID, out var imgBase64) && !string.IsNullOrEmpty(imgBase64))
                                 {
                                     <img class="card-img-top" src="@($"data:image/png;base64,{imgBase64}")" alt="Recipe Image">
                                 }
-                            </div>
+                            </div> *@
                             <div class="card-body">
                                 <h5 class="card-title">@recipe.RecipeName</h5>
                             </div>
@@ -63,7 +63,7 @@
 
 @code {
     private List<Recipe> recipes;
-    private Dictionary<int, string> recipeImages = new Dictionary<int, string>();
+    // private Dictionary<int, string> recipeImages = new Dictionary<int, string>();
 
     private string searchQuery = "";
     private RecipeTypes selectedMealType = RecipeTypes.Any;
@@ -78,14 +78,16 @@
         try
         {
             recipes = await RecipeService.GetAllRecipesAsync();
-            foreach (var recipe in recipes)
-            {
-                if (!string.IsNullOrEmpty(recipe.ImageAddress) && !recipeImages.ContainsKey(recipe.ID))
-                {
-                    var base64Image = await ImageService.LoadImageFromStorage(recipe.ImageAddress);
-                    recipeImages[recipe.ID] = base64Image;
-                }
-            }
+
+            //loading all recipe images
+            // foreach (var recipe in recipes)
+            // {
+            //     if (!string.IsNullOrEmpty(recipe.ImageAddress) && !recipeImages.ContainsKey(recipe.ID))
+            //     {
+            //         var base64Image = await ImageService.LoadImageFromStorage(recipe.ImageAddress);
+            //         recipeImages[recipe.ID] = base64Image;
+            //     }
+            // }
         }
         catch (Exception ex)
         {
