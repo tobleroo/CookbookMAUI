@@ -2,7 +2,11 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    background-color: #8be58b;
+    height: 90vh;
+    overflow-y:auto
 }
+
 
 main {
     flex: 1;
