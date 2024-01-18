@@ -232,6 +232,10 @@
 
         // Reset the meal input for the next entry
         oneMeal = new OneMeal(){Portions = 1};
+
+        //in case earlier dates added after later, re-arrange the list to show in right order
+        finalPlan = finalPlan.OrderBy(mpd => mpd.Date).ToList();
+        StateHasChanged();
     }
 
     private void UpdateRecipeDropdown(ChangeEventArgs e)

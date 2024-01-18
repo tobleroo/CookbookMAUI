@@ -26,6 +26,11 @@
                         <div class="col">
                             @item.Key
                         </div>
+                        <div class="col">
+                            <button class="btn btn-outline-secondary btn-sm" @onclick="@(() => RemoveItem(item.Key))">
+                                <i class="bi bi-dash-circle"></i>
+                            </button>
+                        </div>
                     </div>
                 </li>
             }
@@ -49,6 +54,11 @@
                         </div>
                         <div class="col">
                             @item.Key
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-outline-secondary btn-sm" @onclick="@(() => RemoveExtraItem(item.Key))">
+                                <i class="bi bi-dash-circle"></i>
+                            </button>
                         </div>
                     </div>
                 </li>
@@ -99,11 +109,11 @@
     <div class="container mt-3">
         <h3>Rebuy Recommendations</h3>
         <ul class="list-group">
-            @foreach (var item in recommendations)
+            @foreach (string item in recommendations)
             {
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     @item
-                    <span class="badge bg-primary rounded-pill">Rebuy</span>
+                    <span class="badge bg-primary rounded-pill" @onclick="() => AddRebuyItemToList(item)">Rebuy</span>
                 </li>
             }
         </ul>
@@ -209,22 +219,24 @@
         StateHasChanged();
     }
 
-    private void RemoveItem(string item)
+    private async Task RemoveItem(string item)
     {
-        // if (shoppingList.IngredientsToBuy.ContainsKey(item) && shoppingList.IngredientsToBuy[item])
-        // {
-        //     shoppingList.IngredientsToBuy.Remove(item);
-        //     StateHasChanged();
-        // }
+        if (shoppingList.IngredientsToBuy.ContainsKey(item))
+        {
+            shoppingList.IngredientsToBuy.Remove(item);
+            await ShoppingListService.UpdateShoppingListAsync(shoppingList);
+            StateHasChanged();
+        }
     }
 
-    private void RemoveExtraItem(string item)
+    private async Task RemoveExtraItem(string item)
     {
-        // if (shoppingList.ExtraItemstoBuy.ContainsKey(item) && shoppingList.ExtraItemstoBuy[item])
-        // {
-        //     shoppingList.ExtraItemstoBuy.Remove(item);
-        //     StateHasChanged();
-        // }
+        if (shoppingList.ExtraItemstoBuy.ContainsKey(item))
+        {
+            shoppingList.ExtraItemstoBuy.Remove(item);
+            await ShoppingListService.UpdateShoppingListAsync(shoppingList);
+            StateHasChanged();
+        }
     }
 
     private async Task AddExtraItem()
@@ -276,5 +288,12 @@
         {
             Console.WriteLine($"error ---> {ex.Message}");
         }
+    }
+
+    private async Task AddRebuyItemToList(string item)
+    {
+        shoppingList.ExtraItemstoBuy.Add(item, false);
+        await ShoppingListService.UpdateShoppingListAsync(shoppingList);
+        StateHasChanged();
     }
 }
