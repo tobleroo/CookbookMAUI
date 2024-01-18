@@ -1,0 +1,6 @@
+
+
+.btn-custom:focus {
+    background-color: transparent; /* Keeps the background unchanged */
+    box-shadow: none; /* Removes the glow effect if any */
+}

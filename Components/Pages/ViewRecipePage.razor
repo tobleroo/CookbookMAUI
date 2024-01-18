@@ -28,15 +28,24 @@
                 <h3 class="card-title">@recipe.RecipeName</h3>
                 <p class="card-text">@recipe.Description</p>
                 <p><strong>Cook Time:</strong> @recipe.CookTime minutes</p>
-                <p><strong>Difficulty:</strong> @recipe.Difficulty</p>
+                @* <p><strong>Difficulty:</strong> @recipe.Difficulty</p> *@
                 <p><strong>Type:</strong> @recipe.RecipeType</p>
-                <p><strong>Is Vegan:</strong> @(recipe.IsVegan ? "Yes" : "No")</p>
+                @* <p><strong>Is Vegan:</strong> @(recipe.IsVegan ? "Yes" : "No")</p> *@
                 <p><strong>Portions:</strong> @recipe.Portions</p>
-                <p><strong>Spiciness:</strong> @recipe.Spicyness / 5</p>
+                @* <p><strong>Spiciness:</strong> @recipe.Spicyness / 5</p> *@
             </div>
         </div>
 
         <div class="card mb-3">
+            <div class="change-ingr-portions-box text-center m-2">
+                <button class="btn btn-outline-success btn-custom" @onclick="DecreaseIngredientsAmountByOnePortion">
+                    <i class="bi bi-dash-circle text-success"></i>
+                </button>
+                <p class="d-inline-block mx-3 align-middle">Portions: @recipe.Portions</p>
+                <button class="btn btn-outline-success btn-custom" @onclick="IncreaseIngredientsAmountByOnePortion">
+                    <i class="bi bi-plus-circle text-success"></i>
+                </button>
+            </div>
             <div class="card-header">Ingredients</div>
             <ul class="list-group list-group-flush">
                 @foreach (var ingredient in recipe.Ingredients)
@@ -66,7 +75,7 @@
 
 @* for the g'damn soft keyboard overlapping *@
 <div style="width: 100vw; height: 45vh;">
-    <!-- Content here -->
+    
 </div>
 
 @code {
@@ -103,6 +112,45 @@
         var toast = Toast.Make(text, duration, fontSize);
 
         await toast.Show(cancellationTokenSource.Token);
-        
+
+    }
+
+    private void DecreaseIngredientsAmountByOnePortion()
+    {
+        int oldPortionAmount = recipe.Portions;
+        //add one to amount
+        if(recipe.Portions > 1)
+        {
+            --recipe.Portions;
+            RecalculatePortionAMount(oldPortionAmount, recipe.Portions);
+        }
+        else
+        {
+            //add a "warning" html to display that it does not work
+        }
+
+        StateHasChanged();
+    }
+
+    private void IncreaseIngredientsAmountByOnePortion()
+    {
+        int oldPortionAmount = recipe.Portions;
+
+        RecalculatePortionAMount(oldPortionAmount, ++recipe.Portions);
+        StateHasChanged();
+    }
+
+    private void RecalculatePortionAMount(int oldPortionsAmount, int newPortionsAmount)
+    {
+        foreach (Ingredient ingr in recipe.Ingredients)
+        {
+            double updatedAmount = (double) (ingr.Quantity / oldPortionsAmount) * newPortionsAmount;
+
+            //check if amount has decimals
+            if (updatedAmount != Math.Floor(updatedAmount)) 
+                updatedAmount = Math.Round(updatedAmount, 2);
+
+            ingr.Quantity = updatedAmount;
+        }
     }
 }
