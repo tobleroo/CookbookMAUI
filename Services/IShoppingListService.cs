@@ -11,6 +11,7 @@ namespace MobileCookbook.Services
     {
         Task<bool> AddDateToCheckedIngredient(string ingredientName);
         Task<bool> AddRecipetoShoppingList(int recipeID, int portions);
+        Task ClearRecipeIngredientsFromShoppingList();
         Task ClearTheShoppingList();
         Task<List<IngredientHistoryData>> GetIngredientHistory();
         List<string> GetRebuyRecommendations(List<IngredientHistoryData> history);

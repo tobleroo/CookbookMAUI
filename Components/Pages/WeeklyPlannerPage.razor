@@ -16,7 +16,7 @@
 @if (finalPlan.Any())
 {
     <button @onclick="savePlanToDb">Save plan</button>
-    <button @onclick=" CreateShoppingListFromPlan">create shoppinglist</button>  
+    <button @onclick=" CreateShoppingListFromPlan">create shoppinglist</button>
 }
 
 <div class="container">
@@ -297,10 +297,9 @@
 
     private async void CreateShoppingListFromPlan()
     {
-        await shoppingService.ClearTheShoppingList();
+        await shoppingService.ClearRecipeIngredientsFromShoppingList();
         //flatten the finalplan to get all wanted recipes
         var allMeals = finalPlan.SelectMany(plan => plan.Meals).ToList();
-
 
         //then add the new
         foreach(var newShoppingRecipe in allMeals)

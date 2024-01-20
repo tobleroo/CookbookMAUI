@@ -23,6 +23,16 @@ namespace MobileCookbook.Services
             await _recipeDb.ClearShoppingListAsync();
         }
 
+        public async Task ClearRecipeIngredientsFromShoppingList()
+        {
+            var shoppinglist =  await _recipeDb.GetFirstOrDefaultShoppingListAsync();
+            if (shoppinglist != null)
+            {
+                shoppinglist.IngredientsToBuy.Clear();
+            }
+            await _recipeDb.UpsertShoppingListAsync(shoppinglist);
+        }
+
         public async Task<ShoppingList> GetShoppingList()
         {
             return await _recipeDb.GetFirstOrDefaultShoppingListAsync();
@@ -42,32 +52,68 @@ namespace MobileCookbook.Services
 
                 // Get ingredients
                 var ingredientsForRecipe = await _recipeDb.GetIngredientsByRecipeIdAsync(recipeID);
-                recipeWanted.Ingredients = ingredientsForRecipe;
+                //recipeWanted.Ingredients = ingredientsForRecipe;
 
                 // If the recipe is not found, return false
-                if (recipeWanted == null)
+                if (ingredientsForRecipe == null || ingredientsForRecipe.Count == 0)
                     return false;
 
                 // Get the shopping list 
                 var shoppinglist = await _recipeDb.GetFirstOrDefaultShoppingListAsync();
 
-                // Run through all ingredients from the recipe and add their name to shopping list items
-                foreach (var ingredient in recipeWanted.Ingredients)
-                {
-                    // Create the item string with portions included
-                    string itemString = $"{ingredient.Name} {(ingredient.Quantity / recipeWanted.Portions) * portions} {ingredient.Unit}";
+                // since i cant alter/change in dictionary, create a new dictionary to return
+                Dictionary<string, bool> updatedIngredientsShoppingList = new();
 
-                    // Add or update the item in the dictionary with a default unchecked state (false)
-                    shoppinglist.IngredientsToBuy[itemString] = false;
+                //run thru the recipe inngredient list of the shoppinglist
+                // to try and find if ingredient name already exists 
+                foreach(KeyValuePair<string,bool> entry in shoppinglist.IngredientsToBuy)
+                {
+                    //split the name on the : to only get the name of the ingredient without any added amounts
+                    string pureName = entry.Key.Split(":")[0];
+                    for (int i = ingredientsForRecipe.Count - 1; i >= 0; i--)
+                    {
+                        if(pureName == ingredientsForRecipe[i].Name)
+                        {
+                            //if yes -> append the amount from the new duplicate to the existing name
+                            double? RecalcIngrAmount = (ingredientsForRecipe[i].Quantity / recipeWanted.Portions) * portions;
+                            string newAddedPortionsAmount = $" + {RecalcIngrAmount} {ingredientsForRecipe[i].Unit}";
+                            //since keys name are immutable, i have to remove and add a new updated name pair
+
+                            // Create the new key name
+                            string updatedKeyName = entry.Key;
+                            updatedKeyName = string.Concat(updatedKeyName, newAddedPortionsAmount);
+
+                            // Add the new key-value pair
+                            updatedIngredientsShoppingList.Add(updatedKeyName, entry.Value);
+
+                            // remove ingredient from the recipe ingredient list 
+                            // so i can add the rest that didnt have duplicates
+                            ingredientsForRecipe.Remove(ingredientsForRecipe[i]);
+                            break;
+                        }
+                    }
                 }
 
+                //if no -> do the string manipulating and add as new item
+                foreach (var ingredient in ingredientsForRecipe)
+                {
+                    // add the portions re-calculated amount to the name string to be seen in the shoppinglist
+                    string itemString = $"{ingredient.Name}: {(ingredient.Quantity / recipeWanted.Portions) * portions} {ingredient.Unit}";
+
+                    updatedIngredientsShoppingList.Add(itemString, false);
+                    // Add or update the item in the dictionary with a default unchecked state (false)
+                    //shoppinglist.IngredientsToBuy[itemString] = false;
+                }
+
+                shoppinglist.IngredientsToBuy = updatedIngredientsShoppingList;
                 // Then update the shopping list
                 await _recipeDb.UpsertShoppingListAsync(shoppinglist);
 
                 return true; // Operation successful
             }
-            catch
+            catch(Exception ex)
             {
+                Console.WriteLine("error -> : "+ ex.Message);
                 return false; // Operation failed
             }
         }
