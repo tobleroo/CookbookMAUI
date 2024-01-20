@@ -90,7 +90,7 @@
     </div>
 
     @* demo to see if it adds the dates *@
-    @* <div>
+    <div>
         <h2>DEMO</h2>
         @foreach (var item in history)
         {
@@ -103,21 +103,24 @@
                 }
             </ul>
         }
-    </div> *@
+    </div>
 
     @* recoomendations *@
-    <div class="container mt-3">
-        <h3>Rebuy Recommendations</h3>
-        <ul class="list-group">
-            @foreach (string item in recommendations)
-            {
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    @item
-                    <span class="badge bg-primary rounded-pill" @onclick="() => AddRebuyItemToList(item)">Rebuy</span>
-                </li>
-            }
-        </ul>
-    </div>
+    @if (recommendations.Any())
+    {
+        <div class="container mt-3">
+            <h3>Rebuy Recommendations</h3>
+            <ul class="list-group">
+                @foreach (string item in recommendations)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        @item
+                        <span class="badge bg-primary rounded-pill" @onclick="() => AddRebuyItemToList(item)">Rebuy</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
 </div>
 
 @code {
@@ -186,14 +189,14 @@
     private async void RemoveCheckedItems()
     {
         //run thru all checked and add a date to its history
-        foreach(var ingr in shoppingList.IngredientsToBuy)
-        {
-            if(ingr.Value == true)
-            {
-                //do the operation of adding to db
-                await ShoppingListService.AddDateToCheckedIngredient(ingr.Key);
-            }
-        }
+        // foreach(var ingr in shoppingList.IngredientsToBuy)
+        // {
+        //     if(ingr.Value == true)
+        //     {
+        //         //do the operation of adding to db
+        //         await ShoppingListService.AddDateToCheckedIngredient(ingr.Key);
+        //     }
+        // }
 
         //do same for extra items
         foreach (var ingr in shoppingList.ExtraItemstoBuy)
