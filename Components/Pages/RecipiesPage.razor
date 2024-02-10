@@ -8,12 +8,9 @@
 @using System.Reflection
 @using MobileCookbook.Utils
 
-<h3 class="text-center my-4">Recipes</h3>
-
-<div class="search-box">
-    <input type="text" class="form-control mb-3" placeholder="Search recipes..." @bind="@searchQuery" @bind:event="oninput" />
-    <select class="form-select mb-3" @bind="selectedMealType">
-        <option value="">All Types</option>
+<div class="input-group mb-3">
+    <input type="text" class="form-control" style="width: 45%;" placeholder="Search name or ingredient" aria-label="Text input with dropdown button" @bind="@searchQuery" @bind:event="oninput" />
+    <select class="form-select dropdown-toggle" aria-label="Dropdown button" @bind="selectedMealType">
         @foreach (var type in Enum.GetValues(typeof(RecipeTypes)))
         {
             <option value="@type">@type</option>
@@ -25,7 +22,7 @@
     <i class="bi bi-plus-lg"></i> Add New Recipe
 </button>
 
-<div class="container">
+<div class="">
     <div class="row">
         @if (recipes == null)
         {
@@ -35,15 +32,9 @@
         {
             @foreach (var recipe in FilteredRecipes)
             {
-                <div class="col-md-4 mb-4">
+                <div class="col-md-4 mb-1">
                     <a @onclick="() => GoToRecipe(recipe.ID)" class="text-decoration-none">
                         <div class="card h-100 shadow-sm">
-                            @* <div class="image-container">
-                                @if (recipeImages.TryGetValue(recipe.ID, out var imgBase64) && !string.IsNullOrEmpty(imgBase64))
-                                {
-                                    <img class="card-img-top" src="@($"data:image/png;base64,{imgBase64}")" alt="Recipe Image">
-                                }
-                            </div> *@
                             <div class="card-body">
                                 <h5 class="card-title">@recipe.RecipeName</h5>
                             </div>

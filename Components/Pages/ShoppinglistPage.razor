@@ -6,22 +6,22 @@
 
 <div class="d-flex align-items-center mb-3">
     <h3 class="mb-0 flex-grow-1">ShoppinglistPage</h3>
-    <button class="btn btn-outline-secondary" @onclick="RemoveCheckedItems">
+    <button class="btn btn-outline-secondary bg-success text-white" @onclick="RemoveCheckedItems">
         <i class="bi bi-arrow-repeat"></i> Update
     </button>
 </div>
 
 <div>
-    <h4>Ingredients to Buy:</h4>
     @if (shoppingList.IngredientsToBuy.Any())
     {
-        <ul class="list-unstyled">
+        <i>Ingredients to Buy:</i>
+        <ul class="list-group">
             @foreach (var item in shoppingList.IngredientsToBuy)
             {
-                <li>
-                    <div class="row">
+                <li class="list-group-item frosted-background">
+                    <div class="row align-items-center">
                         <div class="col-auto">
-                            <input type="checkbox" checked="@item.Value" @onclick="@(() => ToggleCheckedState(item.Key))" />
+                            <input class="form-check-input me-1" type="checkbox" checked="@item.Value" @onclick="@(() => ToggleCheckedState(item.Key))" />
                         </div>
                         <div class="col">
                             @item.Key
@@ -41,16 +41,16 @@
         <p>No ingredients to buy.</p>
     }
 
-    <h4>Extra Items to Buy:</h4>
     @if (shoppingList.ExtraItemstoBuy.Any())
     {
-        <ul class="list-unstyled">
+        <i>Extra Items to Buy:</i>
+        <ul class="list-group">
             @foreach (var item in shoppingList.ExtraItemstoBuy)
             {
-                <li>
-                    <div class="row">
+                <li class="list-group-item frosted-background">
+                    <div class="row align-items-center">
                         <div class="col-auto">
-                            <input type="checkbox" checked="@item.Value" @onclick="@(() => ToggleCheckedState(item.Key, true))" />
+                            <input class="form-check-input me-1" type="checkbox" checked="@item.Value" @onclick="@(() => ToggleCheckedState(item.Key, true))" />
                         </div>
                         <div class="col">
                             @item.Key
@@ -70,9 +70,9 @@
         <p>No extra items to buy.</p>
     }
 
-    <h4>Add Extra Item:</h4>
+    <i>Add Extra Item:</i>
     <div class="input-group mb-3 position-relative">
-        <input type="text" class="form-control" placeholder="Enter new item"
+        <input type="text" class="form-control frosted-background" placeholder="Enter new item"
                @bind="newExtraItem" @oninput="@(e => FilterItems(e.Value.ToString()))">
         <button class="btn btn-primary" @onclick="AddExtraItem">Add</button>
 
@@ -89,7 +89,7 @@
         }
     </div>
 
-    @* demo to see if it adds the dates *@
+    @* demo to see if it adds the dates
     <div>
         <h2>DEMO</h2>
         @foreach (var item in history)
@@ -103,17 +103,17 @@
                 }
             </ul>
         }
-    </div>
+    </div> *@
 
     @* recoomendations *@
     @if (recommendations.Any())
     {
-        <div class="container mt-3">
-            <h3>Rebuy Recommendations</h3>
+        <div class="mt-3 mb-3">
+            <i>Rebuy Recommendations</i>
             <ul class="list-group">
                 @foreach (string item in recommendations)
                 {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item d-flex justify-content-between align-items-center frosted-background">
                         @item
                         <span class="badge bg-primary rounded-pill" @onclick="() => AddRebuyItemToList(item)">Rebuy</span>
                     </li>

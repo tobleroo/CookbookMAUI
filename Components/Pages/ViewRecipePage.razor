@@ -144,13 +144,16 @@
     {
         foreach (Ingredient ingr in recipe.Ingredients)
         {
-            double updatedAmount = (double) (ingr.Quantity / oldPortionsAmount) * newPortionsAmount;
+            if (ingr.Quantity.HasValue)
+            {
+                double updatedAmount = (double) (ingr.Quantity / oldPortionsAmount) * newPortionsAmount;
 
-            //check if amount has decimals
-            if (updatedAmount != Math.Floor(updatedAmount)) 
-                updatedAmount = Math.Round(updatedAmount, 2);
+                //check if amount has decimals
+                if (updatedAmount != Math.Floor(updatedAmount)) 
+                    updatedAmount = Math.Round(updatedAmount, 2);
 
-            ingr.Quantity = updatedAmount;
+                ingr.Quantity = updatedAmount;
+            }
         }
     }
 }

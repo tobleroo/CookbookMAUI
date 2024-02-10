@@ -106,8 +106,9 @@
     flex-flow: row nowrap;
     justify-content: space-evenly;
     text-decoration: none !important;
-    background-color: #51a051;
-    padding-top:5px;
+    /*background-color: #51a051;*/
+    background: linear-gradient(135deg, #3498db, #2ecc71);
+    padding-top: 5px;
 }
 .nav-small-text {
     font-size: 1rem;

@@ -1,0 +1,20 @@
+.random-recipe-container {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+}
+
+.random-recipe-details {
+    margin-top: 15px;
+}
+
+/* Button animation */
+.btn-primary {
+    transition: transform 0.3s ease-in-out;
+}
+
+    .btn-primary:hover {
+        transform: scale(1.1);
+    }
