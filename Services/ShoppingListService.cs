@@ -52,7 +52,6 @@ namespace MobileCookbook.Services
 
                 // Get ingredients
                 var ingredientsForRecipe = await _recipeDb.GetIngredientsByRecipeIdAsync(recipeID);
-                //recipeWanted.Ingredients = ingredientsForRecipe;
 
                 // If the recipe is not found, return false
                 if (ingredientsForRecipe == null || ingredientsForRecipe.Count == 0)
@@ -61,59 +60,52 @@ namespace MobileCookbook.Services
                 // Get the shopping list 
                 var shoppinglist = await _recipeDb.GetFirstOrDefaultShoppingListAsync();
 
-                // since i cant alter/change in dictionary, create a new dictionary to return
+                // since I can't alter/change in dictionary, create a new dictionary to return
                 Dictionary<string, bool> updatedIngredientsShoppingList = new();
 
-                //run thru the recipe inngredient list of the shoppinglist
-                // to try and find if ingredient name already exists 
-                foreach(KeyValuePair<string,bool> entry in shoppinglist.IngredientsToBuy)
+                // Loop through the existing items in the shopping list
+                foreach (KeyValuePair<string, bool> entry in shoppinglist.IngredientsToBuy)
                 {
-                    //split the name on the : to only get the name of the ingredient without any added amounts
+                    // Check if the ingredient already exists in the recipe
                     string pureName = entry.Key.Split(":")[0];
-                    for (int i = ingredientsForRecipe.Count - 1; i >= 0; i--)
+                    bool ingredientExistsInRecipe = ingredientsForRecipe.Any(ingredient => ingredient.Name == pureName);
+
+                    if (ingredientExistsInRecipe)
                     {
-                        if(pureName == ingredientsForRecipe[i].Name)
-                        {
-                            //if yes -> append the amount from the new duplicate to the existing name
-                            double? RecalcIngrAmount = (ingredientsForRecipe[i].Quantity / recipeWanted.Portions) * portions;
-                            string newAddedPortionsAmount = $" + {RecalcIngrAmount} {ingredientsForRecipe[i].Unit}";
-                            //since keys name are immutable, i have to remove and add a new updated name pair
+                        // If it exists, update its quantity
+                        double? recalculatedQuantity = ingredientsForRecipe
+                            .First(ingredient => ingredient.Name == pureName).Quantity / recipeWanted.Portions * portions;
+                        string updatedItemString = $"{pureName}: {recalculatedQuantity} {ingredientsForRecipe.First(ingredient => ingredient.Name == pureName).Unit}";
 
-                            // Create the new key name
-                            string updatedKeyName = entry.Key;
-                            updatedKeyName = string.Concat(updatedKeyName, newAddedPortionsAmount);
+                        // Add the updated item to the updated dictionary
+                        updatedIngredientsShoppingList.Add(updatedItemString, entry.Value);
 
-                            // Add the new key-value pair
-                            updatedIngredientsShoppingList.Add(updatedKeyName, entry.Value);
-
-                            // remove ingredient from the recipe ingredient list 
-                            // so i can add the rest that didnt have duplicates
-                            ingredientsForRecipe.Remove(ingredientsForRecipe[i]);
-                            break;
-                        }
+                        // Remove the ingredient from the recipe list since it's been accounted for
+                        ingredientsForRecipe.RemoveAll(ingredient => ingredient.Name == pureName);
+                    }
+                    else
+                    {
+                        // If it doesn't exist, keep the original item
+                        updatedIngredientsShoppingList.Add(entry.Key, entry.Value);
                     }
                 }
 
-                //if no -> do the string manipulating and add as new item
+                // Add any new ingredients from the recipe
                 foreach (var ingredient in ingredientsForRecipe)
                 {
-                    // add the portions re-calculated amount to the name string to be seen in the shoppinglist
-                    string itemString = $"{ingredient.Name}: {(ingredient.Quantity / recipeWanted.Portions) * portions} {ingredient.Unit}";
-
-                    updatedIngredientsShoppingList.Add(itemString, false);
-                    // Add or update the item in the dictionary with a default unchecked state (false)
-                    //shoppinglist.IngredientsToBuy[itemString] = false;
+                    string newItemString = $"{ingredient.Name}: {(ingredient.Quantity / recipeWanted.Portions) * portions} {ingredient.Unit}";
+                    updatedIngredientsShoppingList.Add(newItemString, false);
                 }
 
+                // Update the shopping list with the modified dictionary
                 shoppinglist.IngredientsToBuy = updatedIngredientsShoppingList;
-                // Then update the shopping list
                 await _recipeDb.UpsertShoppingListAsync(shoppinglist);
 
                 return true; // Operation successful
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Console.WriteLine("error -> : "+ ex.Message);
+                Console.WriteLine("error -> : " + ex.Message);
                 return false; // Operation failed
             }
         }
